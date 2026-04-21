@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Otávio · BetTracker Pro</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f5c518">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BetTracker">
+
+<!-- ÍCONES ATUALIZADOS -->
+<link rel="apple-touch-icon" href="IMG_8958.png">
+<link rel="apple-touch-icon" sizes="192x192" href="IMG_8958.png">
+<link rel="apple-touch-icon" sizes="512x512" href="IMG_8959.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0c0f;
+  --surface: #111318;
+  --surface2: #191c23;
+  --border: #1f2330;
+  --accent: #f5c518;
+  --text: #e8eaf0;
+  --muted: #5a6070;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.header {
+  padding: 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+}
+
+.logo {
+  font-family: var(--font-head);
+  font-weight:800;
+}
+
+.logo span { color: var(--accent); }
+
+.nav {
+  display:flex;
+  border-bottom:1px solid var(--border);
+}
+
+.nav-tab {
+  flex:1;
+  padding:12px;
+  background:none;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+}
+
+.nav-tab.active {
+  color:var(--accent);
+  border-bottom:2px solid var(--accent);
+}
+
+.page { display:none; padding:16px; }
+.page.active { display:block; }
+
+input {
+  width:100%;
+  padding:10px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:6px;
+  margin-bottom:10px;
+}
+
+button {
+  padding:10px;
+  border:none;
+  background:var(--accent);
+  font-weight:bold;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.bet {
+  padding:10px;
+  border-bottom:1px solid var(--border);
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo">Otávio <span>·</span> BetTracker</div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="showPage('registro')">Registro</button>
+  <button class="nav-tab" onclick="showPage('insights')">Insights</button>
+</div>
+
+<div id="page-registro" class="page active">
+
+<h3>Nova Aposta</h3>
+
+<input id="event" placeholder="Evento">
+<input id="odd" type="number" placeholder="Odd">
+<input id="stake" type="number" placeholder="Valor">
+
+<button onclick="addBet()">Salvar</button>
+
+<br><br>
+
+<div id="list"></div>
+
+</div>
+
+<div id="page-insights" class="page">
+  <h3>Insights</h3>
+</div>
+
+<script>
+let bets = JSON.parse(localStorage.getItem("bets") || "[]");
+
+function save(){
+  localStorage.setItem("bets", JSON.stringify(bets));
+}
+
+function addBet(){
+  const ev = document.getElementById("event").value;
+  const odd = parseFloat(document.getElementById("odd").value);
+  const stake = parseFloat(document.getElementById("stake").value);
+
+  if(!ev || !odd || !stake) return;
+
+  bets.unshift({ev, odd, stake});
+  save();
+  render();
+}
+
+function render(){
+  document.getElementById("list").innerHTML = bets.map(b => `
+    <div class="bet">
+      ${b.ev} | Odd ${b.odd} | R$ ${b.stake}
+    </div>
+  `).join("");
+}
+
+function showPage(p){
+  document.querySelectorAll(".page").forEach(e => e.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(e => e.classList.remove("active"));
+
+  document.getElementById("page-" + p).classList.add("active");
+  event.target.classList.add("active");
+}
+
+render();
+</script>
+
+</body>
+</html>
