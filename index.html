@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Otávio · BetTracker Pro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f5c518">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BetTracker">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #191c23;
+    --border: #1f2330;
+    --accent: #f5c518;
+    --accent2: #00e5a0;
+    --red: #ff4757;
+    --green: #00e5a0;
+    --blue: #4a9eff;
+    --purple: #9b6dff;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { font-size: 14px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 18px 28px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top:0; z-index:100; }
+  .logo { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .header-date { color: var(--muted); font-size: 0.78rem; }
+  .nav { display: flex; gap: 2px; padding: 12px 28px 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .nav-tab { padding: 10px 20px; border: none; background: transparent; color: var(--muted); font-family: var(--font-head); font-size: 0.85rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+  .page { display: none; padding: 24px 28px; }
+  .page.active { display: block; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .stat-card.yellow::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .stat-value { font-family: var(--font-head); font-size: 1.7rem; font-weight: 800; }
+  .stat-value.pos { color: var(--green); }
+  .stat-value.neg { color: var(--red); }
+  .stat-sub { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+  .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .section-title { font-family: var(--font-head); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 0.7rem; color​​​​​​​​​​​​​​​​
