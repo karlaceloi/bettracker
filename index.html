@@ -20,17 +20,16 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ── Substitua com suas credenciais do Firebase Console ──
   const firebaseConfig = {
     apiKey: "AIzaSyBBmYapZvHxigBwgnY8k8o1nVQnUSOBNpw",
     authDomain: "bettracker-otavio.firebaseapp.com",
     projectId: "bettracker-otavio",
     storageBucket: "bettracker-otavio.firebasestorage.app",
     messagingSenderId: "255247876369",
-    appId: “1:255247876369:web:28e564ff4e72eb7d560cb0”
+    appId: "1:255247876369:web:28e564ff4e72eb7d560cb0"
   };
 
-  const cloudEnabled = firebaseConfig.apiKey !== "AIzaSyBBmYapZvHxigBwgnY8k8o1nVQnUSOBNpw";
+  const cloudEnabled = firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI";
   let db = null;
 
   if (cloudEnabled) {
@@ -1566,60 +1565,165 @@ async function loadRealOdds(profile) {
 }
 
 async function loadEnrichedLocal(profile) {
-  const source = JSON.parse(JSON.stringify(LOCAL_DB[currentSport]));
-  source.forEach(m => {
-    m.leagueFlag=m.flag; m.recommended=false;
-    m.odds=m.odds.map(o=>({...o,highlight:false,isProfile:false}));
-    let maxV=0,maxI=-1; m.odds.forEach((o,i)=>{if(o.value>maxV){maxV=o.value;maxI=i;}});
-    if(maxI>=0&&maxV>1.9) m.odds[maxI].highlight=true;
+  // IA gera jogos REAIS da data selecionada — não usa base fixa
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + currentDayFilter);
+  const dateStr = targetDate.toLocaleDateString('pt-BR', {
+    weekday:'long', day:'2-digit', month:'long', year:'numeric'
   });
-  tagProfileOdds_all(source,profile);
-  tagRecommended(source,profile);
-  await enrichWithAI(source,profile);
-  opportunities[currentSport]=source;
-  document.getElementById('last-update-txt').textContent='📊 Análise IA · '+new Date().toLocaleTimeString('pt-BR');
-  renderOpportunities();
-}
-
-async function enrichWithAI(matches, profile) {
+  const sport = currentSport === 'football' ? 'futebol' : 'tênis';
   const profilePart = profile ? buildProfileText(profile) : '';
-  const matchList = matches.slice(0,8).map((m,i)=>`${i+1}. ${m.home} x ${m.away} (${m.league})`).join('\n');
-  const prompt = `Você é um analista especialista em apostas esportivas com foco no mercado brasileiro.
+
+  const ligas = currentSport === 'football'
+    ? 'Brasileirão Série A, Brasileirão Série B, Copa do Brasil, Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Libertadores, Sul-Americana, Champions League, Europa League, eliminatórias e copas nacionais'
+    : 'Roland Garros, Wimbledon, US Open, Australian Open, ATP Masters 1000, ATP 500, WTA 1000, WTA 500, ATP 250';
+
+  const prompt = `Você é um analista especialista em apostas esportivas com acesso a dados reais até maio de 2026.
+Hoje é ${dateStr}. Gere exatamente 8 jogos de ${sport} que REALMENTE acontecem nesta data.
 ${profilePart}
 
-Para cada jogo abaixo, gere análise DETALHADA e ANALÍTICA. Seja específico: mencione forma recente real, H2H, lesões prováveis, padrões estatísticos, contexto de tabela.
+IMPORTANTE:
+- Use apenas jogos que de fato ocorrem em ${dateStr} com base no calendário real das ${ligas}
+- Se não houver jogos de uma liga, use outra liga que tenha jogos neste dia
+- As odds devem ser realistas como as da Bet365 nesta data
+- Cada jogo deve ter análise detalhada, forma recente real, H2H histórico, contexto atual
 
-Jogos:
-${matchList}
+Responda SOMENTE JSON válido sem markdown:
+{
+  "dateLabel": "${dateStr}",
+  "profileInsight": "análise 2-3 frases sobre perfil do apostador e estratégia para este dia",
+  "matches": [
+    {
+      "league": "nome da liga",
+      "leagueFlag": "emoji do país/competição",
+      "home": "nome exato do time/jogador",
+      "away": "nome exato do time/jogador",
+      "time": "HH:MM",
+      "recommended": false,
+      "confidence": 4,
+      "riskLevel": "baixo",
+      "odds": [
+        {"type": "Casa", "value": 2.10, "highlight": false, "isProfile": false},
+        {"type": "Empate", "value": 3.20, "highlight": false, "isProfile": false},
+        {"type": "Fora", "value": 3.50, "highlight": true, "isProfile": false},
+        {"type": "Over 2.5", "value": 1.80, "highlight": false, "isProfile": false},
+        {"type": "BTTS", "value": 1.70, "highlight": false, "isProfile": false}
+      ],
+      "analysis": "análise detalhada de 3-4 linhas: forma recente, H2H, contexto de tabela, lesões",
+      "bestBet": "mercado @ odd — justificativa estatística",
+      "stats": {
+        "homeForm": "VVDVE",
+        "awayForm": "DVVVD",
+        "h2h": "Últimos 10: TIME_A 4V 3E 3D",
+        "homeGoalsAvg": 1.8,
+        "homeWinPct": 45
+      },
+      "news": [
+        "notícia/dado real sobre o jogo 1",
+        "notícia/dado real sobre o jogo 2",
+        "contexto relevante para apostadores"
+      ]
+    }
+  ]
+}
 
-Responda SOMENTE JSON sem markdown:
-{"profileInsight":"análise de 2-3 frases sobre o perfil do apostador e estratégia para hoje baseada no histórico real","games":[{"idx":1,"confidence":4,"analysis":"análise detalhada de 3-4 linhas com contexto, estatísticas e raciocínio","bestBet":"mercado específico recomendado com odd e justificativa","riskLevel":"baixo|médio|alto","news":["dado/notícia real 1","dado/notícia real 2","dado/notícia real 3"]}]}`;
+Para tênis: remova Empate, adicione "Vencedor 1º Set", "Over X games". Stats: use alcarazForm/awayForm, h2h, surface, winPctSurface.
+highlight=true na odd com maior valor esperado. isProfile=true nos mercados alinhados com histórico do apostador.
+confidence 1-5. riskLevel: baixo/médio/alto.`;
 
-  const PROXIES = ['https://corsproxy.io/?url=','https://api.allorigins.win/raw?url='];
-  for (const proxy of PROXIES) {
+  // Firebase Function URL — intermediário seguro que não é bloqueado pelo Safari
+  const FUNCTION_URL = 'https://us-central1-bettracker-otavio.cloudfunctions.net/askAI';
+
+  // Tenta Firebase Function primeiro, depois proxies públicos como fallback
+  const ENDPOINTS = [
+    { url: FUNCTION_URL, direct: true },
+    { url: 'https://corsproxy.io/?url=' + encodeURIComponent('https://api.anthropic.com/v1/messages'), direct: false },
+    { url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.anthropic.com/v1/messages'), direct: false }
+  ];
+
+  for (const endpoint of ENDPOINTS) {
     try {
-      const res = await fetch(proxy+encodeURIComponent('https://api.anthropic.com/v1/messages'),{
-        method:'POST', headers:{'Content-Type':'application/json','x-api-key':'','anthropic-version':'2023-06-01'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})
+      let res;
+      if (endpoint.direct) {
+        // Firebase Function recebe o prompt direto
+        res = await fetch(endpoint.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, sport: currentSport, date: dateStr })
+        });
+      } else {
+        res = await fetch(endpoint.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': '', 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, messages: [{ role: 'user', content: prompt }] })
+        });
+      }
+      if (!res.ok) continue;
+
+      const data = await res.json();
+      // Firebase Function retorna {matches, profileInsight} direto
+      // Proxies retornam formato Anthropic padrão
+      let parsed;
+      if (endpoint.direct && data.matches) {
+        parsed = data;
+      } else {
+        const text = (data.content || []).map(i => i.text || '').join('');
+        const clean = text.replace(/```json[\s\S]*?```|```/g, '').trim();
+        parsed = JSON.parse(clean);
+      }
+
+      const matches = parsed.matches || [];
+      if (!matches.length) continue;
+
+      matches.forEach(m => {
+        if (!m.odds) m.odds = [];
+        let maxV = 0, maxI = -1;
+        m.odds.forEach((o, i) => { o.highlight = false; o.isProfile = false; if (o.value > maxV) { maxV = o.value; maxI = i; } });
+        if (maxI >= 0 && maxV > 1.9) m.odds[maxI].highlight = true;
+        m.recommended = m.recommended || false;
+        m.stats = m.stats || {};
+        m.news = m.news || [];
       });
-      if(!res.ok) continue;
-      const data=await res.json();
-      const text=(data.content||[]).map(i=>i.text||'').join('');
-      const parsed=JSON.parse(text.replace(/```json[\s\S]*?```|```/g,'').trim());
-      if(parsed.games) parsed.games.forEach(g=>{
-        const m=matches[g.idx-1]; if(!m) return;
-        if(g.analysis) m.analysis=g.analysis;
-        if(g.bestBet) m.bestBet=g.bestBet;
-        if(g.riskLevel) m.riskLevel=g.riskLevel;
-        if(g.news?.length) m.news=g.news;
-        if(g.confidence) m.confidence=g.confidence;
-      });
-      if(parsed.profileInsight) renderAiBanner(parsed.profileInsight,profile);
-      else renderAiBanner(null,profile);
+
+      tagProfileOdds_all(matches, profile);
+      tagRecommended(matches, profile);
+
+      opportunities[currentSport] = matches;
+      const srcLabel = endpoint.direct ? '🔥 Firebase IA' : '🤖 IA';
+      document.getElementById('last-update-txt').textContent =
+        srcLabel + ' · ' + targetDate.toLocaleDateString('pt-BR', {day:'2-digit',month:'short'}) + ' · ' + new Date().toLocaleTimeString('pt-BR');
+
+      if (parsed.profileInsight) renderAiBanner(parsed.profileInsight, profile);
+      else renderAiBanner(null, profile);
+
+      renderOpportunities();
       return;
-    } catch(e){ continue; }
+
+    } catch(e) {
+      console.warn('Endpoint error:', endpoint.url.substring(0,40), e.message);
+      continue;
+    }
   }
-  renderAiBanner(null,profile);
+
+  useFallbackDB(profile);
+}
+
+function useFallbackDB(profile) {
+  const source = JSON.parse(JSON.stringify(LOCAL_DB[currentSport]));
+  source.forEach(m => {
+    m.leagueFlag = m.flag || '🏆';
+    m.recommended = false;
+    m.odds = m.odds.map(o => ({...o, highlight:false, isProfile:false}));
+    let maxV=0, maxI=-1;
+    m.odds.forEach((o,i) => { if(o.value>maxV){maxV=o.value;maxI=i;} });
+    if (maxI >= 0 && maxV > 1.9) m.odds[maxI].highlight = true;
+  });
+  tagProfileOdds_all(source, profile);
+  tagRecommended(source, profile);
+  opportunities[currentSport] = source;
+  document.getElementById('last-update-txt').textContent = '📋 Base local · sem conexão';
+  renderAiBanner(null, profile);
+  renderOpportunities();
 }
 
 function buildProfileText(profile) {
